@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>2D Targets</title>
+        <meta charset="utf-8" />
+    </head>
+
+    <style>
+        div {
+            position: absolute;
+            top: 100px;
+            left: 100px;
+        }
+    </style>
+
+    <body>
+        <!-- our buttond to tell others -->
+        <button id="blue" style="background-color:rgb(0, 0, 255); color:rgb(255, 255, 255)">Cooperative</button>
+        <button id="red" style="background-color:rgb(255, 0, 0); color:rgb(255, 255, 255)">Competitive</button>
+
+        <h2 id="timerText" style="display:none">
+            0:00
+        </h2>
+
+        <h2 id="score2" style="display:none">
+            2D SCORE: 0
+        </h2>
+
+        <h2 id="score3" style="display:none">
+            3D SCORE: 0
+        </h2>
+
+        <h2 id="coopScore" style="display:none">
+            SCORE: 0
+        </h2>
+
+        <div id="target" onclick="socket.emit('target2D');" style="display:none; color:red; font-size:500%">
+            ◉
+        </div>
+
+        <!-- this is magic code created when the node server runs -->
+        <!-- //VERY HANDY! https://socket.io/docs/v3/emit-cheatsheet/  -->
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.2.3/jquery.min.js"></script>
+        <script>
+            let socket = io();
+
+            //variables
+            score_3D = 0;
+            score_2D = 0;
+            score_coop = 0;
+
+            socket.on('connect', (userData) => {
+                console.log('I exist!');
+
+                //put code here so that we know that socket.io has initailized ...
+                document.querySelector('#red').addEventListener('click', function(){
+                    socket.emit('red');
+                });
+
+                document.querySelector('#blue').addEventListener('click', function(){
+                    socket.emit('blue');
+                });
+
+                //listen to event from server
+                /*
+                socket.on('color_change', (data) => {
+                    let colorStr = 'rgb(' + data.r + ',' + data.g + ',' + data.b + ')';
+                    console.log('color_change:' + colorStr);
+                    document.body.style.backgroundColor = colorStr;
+                });
+                */
+
+                socket.on('cooperative', () => {
+                    start();
+                    document.querySelector('#coopScore').style.display="block"
+                });
+
+                socket.on('competitive', () => {
+                    start();
+                    document.querySelector('#score2').style.display="block"
+                    document.querySelector('#score3').style.display="block"
+                });
+
+                socket.on('score2D', () => {
+                    score_2D++;
+                    score_coop = score_2D + score_3D;
+                    document.querySelector('#score2').innerHTML=("2D SCORE: " + score_2D)
+                    document.querySelector('#coopScore').innerHTML=("SCORE: " + score_coop)
+                    targetMove();
+                });
+
+                socket.on('score3D', () => {
+                    score_3D++;
+                    score_coop = score_2D + score_3D;
+                    document.querySelector('#score3').innerHTML=("3D SCORE: " + score_3D)
+                    document.querySelector('#coopScore').innerHTML=("SCORE: " + score_coop)
+                });
+
+                //functions
+                function start() {
+                    document.querySelector('#blue').setAttribute('disabled', true);
+                    document.querySelector('#red').setAttribute('disabled', true);
+                    document.querySelector('#blue').setAttribute('hidden', true);
+                    document.querySelector('#red').setAttribute('hidden', true);
+
+                    document.querySelector('#timerText').style.display="inline"
+
+                    time = setTimeout(end, 60000);
+                    timer = setInterval(document.querySelector('#timerText').innerHTML=(time), 1000);
+
+                    targetMove();
+                    document.querySelector('#target').style.display="block"
+                    return;                    
+                }
+
+                function end() {
+                    clearInterval(timer);
+                }
+
+                //target placement
+                function targetMove() {
+                    
+                    var winWidth = window.innerWidth;
+                    var winHeight = window.innerHeight;
+                    
+                    randomTop = Math.random() * winHeight;
+                    randomLeft = Math.random()* winWidth;
+
+                    document.querySelector('#target').style.top = randomTop + "px";
+                    document.querySelector('#target').style.left = randomLeft + "px";
+
+                }
+
+            });
+
+        </script>
+    </body>
+</html>
